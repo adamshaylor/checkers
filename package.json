@@ -1,0 +1,27 @@
+{
+  "name": "checkers",
+  "version": "1.0.0",
+  "description": "Checkers (English Draughts) in Elm",
+  "main": "index.html",
+  "scripts": {
+    "start": "parcel index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamshaylor/checkers.git"
+  },
+  "author": "Adam Shaylor <business@adamshaylor.com>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/adamshaylor/checkers/issues"
+  },
+  "homepage": "https://github.com/adamshaylor/checkers#readme",
+  "dependencies": {
+    "parcel": "^1.12.4"
+  },
+  "devDependencies": {
+    "elm-hot": "^1.1.4",
+    "node-elm-compiler": "^5.0.4"
+  }
+}
