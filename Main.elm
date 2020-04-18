@@ -25,13 +25,24 @@ type Class
   = Man
   | King
 
-
 type alias Piece =
   { color : Color
   , class : Class
   }
 
-type alias Model = Array Maybe Piece
+type Square =
+  = Occupied Piece
+  | Empty
+
+type alias Move =
+  { fromIndex : Int
+  , toIndex : Int
+  }
+
+type alias Model =
+  { pieces : List Square
+  , moves : List Moves
+  }
 
 init : Model
 init =
@@ -39,9 +50,9 @@ init =
     piecesPerColor = 12
     gapBetweenColors = 8
   in
-    Array.append (Array.repeat piecesPerColor (Just (Piece Red Man))) <|
-    Array.append (Array.repeat gapBetweenColors Nothing) <|
-    Array.repeat piecesPerColor (Just (Piece Black Man))
+    List.append (List.repeat piecesPerColor (Square Occupied Piece Red Man)) <|
+    List.append (List.repeat gapBetweenColors (Square Empty)) <|
+    List.repeat piecesPerColor (Square Occupied Piece Black Man)
 
 
 
