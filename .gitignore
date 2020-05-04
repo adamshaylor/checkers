@@ -1,4 +1,5 @@
 node_modules
+.cache
 # elm-package generated files
 elm-stuff
 # elm-repl generated files

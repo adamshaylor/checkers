@@ -9,7 +9,7 @@ import List.Extra exposing (groupsOf)
 size : Int
 size = 8
 
-playingSquaresPerRow: Int
+playingSquaresPerRow : Int
 playingSquaresPerRow = size // 2
 
 numberOfSquares : Int
