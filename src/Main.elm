@@ -40,7 +40,10 @@ type Piece
 
 type Square
   = NonPlaying
-  | Vacant
+  | Playing PlayingSquare
+
+type PlayingSquare
+  = Vacant
   | Occupied Piece
 
 type alias Move = List Int
@@ -62,18 +65,18 @@ init : Model
 init =
   let
     redsStartingRows = List.concat
-      [ makeRow NonPlaying (Occupied (Piece Red Man))
-      , makeRow (Occupied (Piece Red Man)) NonPlaying
-      , makeRow NonPlaying (Occupied (Piece Red Man))
+      [ makeRow NonPlaying (Playing (Occupied (Piece Red Man)))
+      , makeRow (Playing (Occupied (Piece Red Man))) NonPlaying
+      , makeRow NonPlaying (Playing (Occupied (Piece Red Man)))
       ]
     vacantRows = List.concat
-      [ makeRow Vacant NonPlaying
-      , makeRow NonPlaying Vacant
+      [ makeRow (Playing Vacant) NonPlaying
+      , makeRow NonPlaying (Playing Vacant)
       ]
     whitesStartingRows = List.concat
-      [ makeRow (Occupied (Piece White Man)) NonPlaying
-      , makeRow NonPlaying (Occupied (Piece White Man))
-      , makeRow (Occupied (Piece White Man)) NonPlaying
+      [ makeRow (Playing (Occupied (Piece White Man))) NonPlaying
+      , makeRow NonPlaying (Playing (Occupied (Piece White Man)))
+      , makeRow (Playing (Occupied (Piece White Man))) NonPlaying
       ]
   in
     { board = List.concat
@@ -111,11 +114,11 @@ renderSquare square =
     cellText =
       case square of
         NonPlaying -> "NP"
-        Vacant -> "V"
-        Occupied (Piece Red Man) -> "RM"
-        Occupied (Piece Red King) -> "RK"
-        Occupied (Piece White Man) -> "WM"
-        Occupied (Piece White King) -> "WK"
+        Playing Vacant -> "V"
+        Playing (Occupied (Piece Red Man)) -> "RM"
+        Playing (Occupied (Piece Red King)) -> "RK"
+        Playing (Occupied (Piece White Man)) -> "WM"
+        Playing (Occupied (Piece White King)) -> "WK"
   in
     td []
       [ text cellText ]
