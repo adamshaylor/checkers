@@ -46,14 +46,15 @@ type IndexedMove
   = IndexedMove PlayingSquareIndex PlayingSquareIndex
 
 type Turn
-  = Turn Color (List IndexedMove)
+  = Turn Color (Array IndexedMove)
 
-type alias Turns = List Turn
+type alias Turns = Array Turn
 
 type alias WinningColor = Color
 
 type Game
-  = Game InitialBoardState Turns
+  = UninterruptedGame InitialBoardState Turns
+  | DrawnGame InitialBoardState Turns
   | ResignedGame InitialBoardState Turns WinningColor
 
 squareIndexToRowIndex : PlayingSquareIndex -> Int
@@ -151,10 +152,7 @@ isValidDirectionalMove directionalMove boardState =
       case (originSquare, relativeDirection) of
         (Just (Occupied (Piece _ King)), _) -> True
         (Just (Occupied (Piece _ Man)), Just Forward) -> True
-        (Just (Occupied (Piece _ Man)), Just Backward) -> False
-        (Nothing, _) -> False
-        (Just Vacant, _) -> False
-        (_, Nothing) -> False
+        (_, _) -> False
   in
     if isKingOrForwardMovingMan then
       case directionalMove of
@@ -196,3 +194,42 @@ validMoves originIndex boardState =
       allDirectionalMoves
   in
     List.map directionalToIndexedMove validDirectionalMoves
+
+lastInArray : Array a -> Maybe a
+lastInArray array =
+  let
+    lastIndex = (Array.length array) - 1
+  in
+    Array.get lastIndex array
+
+-- TODO: Reconcile the concept of a game as being an initial state with
+-- an array of turns (mutations) with conflicting concept of a game as
+-- consisting of board states. The former guarantees parity between
+-- valid moves and board states. The latter saves us the trouble of
+-- either having to recreate the latest board state or from having to
+-- accept a board state as an argument, which defeats the guarantee of
+-- parity.
+
+-- isTurnComplete : Turn -> Bool
+-- isTurnComplete (Turn _ indexedMoves) =
+--   case (lastInArray indexedMoves) of
+--     Just indexedMove ->
+--       case (indexedToDirectionalMove indexedMove) of
+--         Just (JumpMove _ _) ->
+
+--     Nothing -> False
+
+-- whoseTurn : Game -> Maybe Color
+-- whoseTurn game =
+--   case game of
+--     UninterruptedGame _ turns ->
+--       case (lastInArray turns) of
+--         Nothing -> Just Red
+--         Just (Turn Red moves) ->
+--           if isTurnComplete (Turn Red moves) then Just White
+--           else Just Red
+--         Just (Turn White moves) ->
+--           if isTurnComplete (Turn White moves) then Just Red
+--           else Just White
+--     DrawnGame _ _ -> Nothing
+--     ResignedGame _ _ _ -> Nothing
