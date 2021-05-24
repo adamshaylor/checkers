@@ -45,17 +45,24 @@ type DirectionalMove
 type IndexedMove
   = IndexedMove PlayingSquareIndex PlayingSquareIndex
 
-type Turn
-  = Turn Color (Array IndexedMove)
+type alias Turn =
+  { color: Color
+  , indexedMoves: Array IndexedMove
+  , directionalMoves: Array DirectionalMove
+  , endingBoardState: BoardState
+  }
 
-type alias Turns = Array Turn
+type GameInterruption
+  = UninterruptedGame
+  | DrawnGame
+  | ResignedGame
 
-type alias WinningColor = Color
-
-type Game
-  = UninterruptedGame InitialBoardState Turns
-  | DrawnGame InitialBoardState Turns
-  | ResignedGame InitialBoardState Turns WinningColor
+type alias Game =
+{ initialBoardState: InitialBoardState
+, turns: Array Turn
+, interruption: GameInterruption
+, winner: Maybe Color
+}
 
 squareIndexToRowIndex : PlayingSquareIndex -> Int
 squareIndexToRowIndex squareIndex =
@@ -202,13 +209,16 @@ lastInArray array =
   in
     Array.get lastIndex array
 
--- TODO: Reconcile the concept of a game as being an initial state with
--- an array of turns (mutations) with conflicting concept of a game as
--- consisting of board states. The former guarantees parity between
--- valid moves and board states. The latter saves us the trouble of
--- either having to recreate the latest board state or from having to
--- accept a board state as an argument, which defeats the guarantee of
--- parity.
+getLastTurn : Game -> Maybe Turn
+getLastTurn game =
+  lastInArray game.turns
+
+getLastDirectionalMove : Game -> Maybe DirectionalMove
+getLastDirectionalMove game =
+  getLastTurn game
+    |> Maybe.andThen (\lastTurn -> lastInArray lastTurn.directionalMoves)
+
+-- TODO: Restart these to match new record types
 
 -- isTurnComplete : Turn -> Bool
 -- isTurnComplete (Turn _ indexedMoves) =
