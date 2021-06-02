@@ -1,6 +1,7 @@
 module CheckersGame exposing (..)
 
 import Array exposing (Array)
+import Dict
 
 playingSquaresPerRow : Int
 playingSquaresPerRow = 4
@@ -45,11 +46,15 @@ type DirectionalMove
 type IndexedMove
   = IndexedMove PlayingSquareIndex PlayingSquareIndex
 
+type alias Move =
+  { indexed: IndexedMove
+  , directional: DirectionalMove
+  }
+
 type alias Turn =
   { color: Color
-  , indexedMoves: Array IndexedMove
-  , directionalMoves: Array DirectionalMove
-  , endingBoardState: BoardState
+  , moves: Array Move
+  , lastBoardState: BoardState
   }
 
 type GameInterruption
@@ -58,11 +63,11 @@ type GameInterruption
   | ResignedGame
 
 type alias Game =
-{ initialBoardState: InitialBoardState
-, turns: Array Turn
-, interruption: GameInterruption
-, winner: Maybe Color
-}
+  { initialBoardState: InitialBoardState
+  , turns: Array Turn
+  , interruption: GameInterruption
+  , winner: Maybe Color
+  }
 
 squareIndexToRowIndex : PlayingSquareIndex -> Int
 squareIndexToRowIndex squareIndex =
@@ -183,8 +188,8 @@ directionalToIndexedMove directionalMove =
     JumpMove originIndex _ ->
       IndexedMove originIndex (getMoveDestinationIndex directionalMove)
 
-validMoves : PlayingSquareIndex -> BoardState -> List IndexedMove
-validMoves originIndex boardState =
+validMovesForSquare : PlayingSquareIndex -> BoardState -> List Move
+validMovesForSquare originIndex boardState =
   let
     allDirectionalMoves =
       [ SimpleMove originIndex NW
@@ -200,7 +205,25 @@ validMoves originIndex boardState =
       (\directionalMove -> isValidDirectionalMove directionalMove boardState)
       allDirectionalMoves
   in
-    List.map directionalToIndexedMove validDirectionalMoves
+    List.map (\directionalMove ->
+      { directional = directionalMove
+      , indexed = directionalToIndexedMove directionalMove
+      }) validDirectionalMoves
+
+isSquareOccupiedByColor : PlayingSquare -> Color -> Bool
+isSquareOccupiedByColor square playerColor =
+  case square of
+    Occupied (Piece squareColor _) -> squareColor == playerColor
+    _ -> False
+
+validMoves : BoardState -> Color -> List Move
+validMoves boardState playerColor =
+  let
+    isSquareOccupiedByThisColor = \square -> isSquareOccupiedByColor square playerColor
+    indicesToIsOccupiedByPlayer = Dict.fromList (Array.toList (Array.indexedMap (\index square -> (index, isSquareOccupiedByThisColor square)) boardState))
+    playerOccupiedIndices = Dict.keys indicesToIsOccupiedByPlayer
+  in
+    List.concatMap (\squareIndex -> validMovesForSquare squareIndex boardState) playerOccupiedIndices
 
 lastInArray : Array a -> Maybe a
 lastInArray array =
@@ -209,37 +232,25 @@ lastInArray array =
   in
     Array.get lastIndex array
 
-getLastTurn : Game -> Maybe Turn
-getLastTurn game =
-  lastInArray game.turns
-
-getLastDirectionalMove : Game -> Maybe DirectionalMove
-getLastDirectionalMove game =
-  getLastTurn game
-    |> Maybe.andThen (\lastTurn -> lastInArray lastTurn.directionalMoves)
-
--- TODO: Restart these to match new record types
-
 -- isTurnComplete : Turn -> Bool
--- isTurnComplete (Turn _ indexedMoves) =
---   case (lastInArray indexedMoves) of
---     Just indexedMove ->
---       case (indexedToDirectionalMove indexedMove) of
---         Just (JumpMove _ _) ->
+-- isTurnComplete turn =
+--   let
+--     lastMove = lastInArray turn.moves
+--   in
+--     case lastMove of
+--       Just move ->
+--         case move.directional of
+--           SimpleMove _ _ -> True
+--           JumpMove _ _ ->
+--             let
+--               nextMoves = validMoves turn.lastBoardState turn.color
+--               nextJumpMoves = nextMoves.filter (\move ->
+--                 case move.directional of
+--                   JumpMove -> True
+--                   SimpleMove -> False
+--               )
+--             in
+--               List.length nextJumpMoves > 0
+--       Nothing -> False
 
---     Nothing -> False
-
--- whoseTurn : Game -> Maybe Color
--- whoseTurn game =
---   case game of
---     UninterruptedGame _ turns ->
---       case (lastInArray turns) of
---         Nothing -> Just Red
---         Just (Turn Red moves) ->
---           if isTurnComplete (Turn Red moves) then Just White
---           else Just Red
---         Just (Turn White moves) ->
---           if isTurnComplete (Turn White moves) then Just Red
---           else Just White
---     DrawnGame _ _ -> Nothing
---     ResignedGame _ _ _ -> Nothing
+-- makePlay
