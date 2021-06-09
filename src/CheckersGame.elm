@@ -232,25 +232,34 @@ lastInArray array =
   in
     Array.get lastIndex array
 
--- isTurnComplete : Turn -> Bool
--- isTurnComplete turn =
---   let
---     lastMove = lastInArray turn.moves
---   in
---     case lastMove of
---       Just move ->
---         case move.directional of
---           SimpleMove _ _ -> True
---           JumpMove _ _ ->
---             let
---               nextMoves = validMoves turn.lastBoardState turn.color
---               nextJumpMoves = nextMoves.filter (\move ->
---                 case move.directional of
---                   JumpMove -> True
---                   SimpleMove -> False
---               )
---             in
---               List.length nextJumpMoves > 0
---       Nothing -> False
+isMoveJump : Move -> Bool
+isMoveJump move =
+  case move.directional of
+    JumpMove _ _ -> True
+    SimpleMove _ _ -> False
 
--- makePlay
+isTurnComplete : Turn -> Bool
+isTurnComplete turn =
+  let
+    lastMove = lastInArray turn.moves
+  in
+    case lastMove of
+      Just move ->
+        case move.directional of
+          SimpleMove _ _ -> True
+          JumpMove _ _ ->
+            let
+              nextMoves = validMoves turn.lastBoardState turn.color
+              nextJumpMoves = List.filter isMoveJump nextMoves
+            in
+              List.length nextJumpMoves > 0
+      Nothing -> False
+
+-- whoseTurnIsIt: Game -> Maybe Color
+
+-- makeMove : DirectionalMove -> Game -> Result Game
+-- makeMove move game =
+  -- Confirm it’s the turn of the player at the origin square
+  -- Confirm that the move is valid
+  -- If it's a jump move, remove the jumped piece
+  -- If the destination square is on the back row, replace the piece with a king, otherwise, just move it
