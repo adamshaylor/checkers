@@ -2,6 +2,7 @@ module CheckersGame exposing (..)
 
 import Array exposing (Array)
 import Dict
+import Html.Attributes exposing (start)
 
 playingSquaresPerRow : Int
 playingSquaresPerRow = 4
@@ -12,6 +13,10 @@ numberOfPlayingSquares = playingSquaresPerRow^2
 type Color
   = Red
   | White
+
+
+startingColor : Color
+startingColor = Red
 
 type Rank
   = Man
@@ -240,6 +245,8 @@ isMoveJump move =
 
 isTurnComplete : Turn -> Bool
 isTurnComplete turn =
+  -- TODO: If the last move resulted in the conversion of a piece from
+  -- man to king, the turn is complete.
   let
     lastMove = lastInArray turn.moves
   in
@@ -255,11 +262,32 @@ isTurnComplete turn =
               List.length nextJumpMoves > 0
       Nothing -> False
 
--- whoseTurnIsIt: Game -> Maybe Color
+whoseTurnIsIt: Game -> Maybe Color
+whoseTurnIsIt game =
+  case (game.winner, game.interruption, lastInArray game.turns) of
+    (Nothing, UninterruptedGame, Nothing) -> Just startingColor
+    (Nothing, UninterruptedGame, Just turn) ->
+      case ((isTurnComplete turn), turn.color) of
+        (True, Red) -> Just White
+        (True, White) -> Just Red
+        (False, _) -> Just turn.color
+    (Just _, _, _) -> Nothing
+    (_, DrawnGame, _) -> Nothing
+    (_, ResignedGame, _) -> Nothing
+
+-- whoWon: Game -> Maybe Color
+-- whoWon game =
+  -- If only one player has pieces remaining on the board, they won
+  -- If both players have pieces remaining on the board, but the player whose turn it is has no valid moves, their opponent won
+  -- Otherwise, nobody won
+  -- (We will not attempt to deduce a drawn game. For now, we can provide a mechanism for players to agree that the game is drawn.)
 
 -- makeMove : DirectionalMove -> Game -> Result Game
 -- makeMove move game =
+  -- Confirm that the game is uninterrupted and there is no winner
+  -- Confirm that there is a player at the origin square
   -- Confirm it’s the turn of the player at the origin square
   -- Confirm that the move is valid
   -- If it's a jump move, remove the jumped piece
   -- If the destination square is on the back row, replace the piece with a king, otherwise, just move it
+  -- If the move results in a win for either player, set the winner field
