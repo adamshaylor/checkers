@@ -236,7 +236,9 @@ validMoves : BoardState -> Color -> List Move
 validMoves boardState playerColor =
   let
     isSquareOccupiedByThisColor = \square -> isSquareOccupiedByColor square playerColor
-    indicesToIsOccupiedByPlayer = Dict.fromList (Array.toList (Array.indexedMap (\index square -> (index, isSquareOccupiedByThisColor square)) boardState))
+    indicesToIsOccupiedByPlayer = Array.indexedMap (\index square -> (index, isSquareOccupiedByThisColor square)) boardState
+      |> Array.toList
+      |> Dict.fromList
     playerOccupiedIndices = Dict.keys indicesToIsOccupiedByPlayer
   in
     List.concatMap (\squareIndex -> validMovesForSquare squareIndex boardState) playerOccupiedIndices
@@ -346,11 +348,6 @@ whoWon game =
                 Nothing
               else
                 Just (opponent player)
-
-  -- If only one player has pieces remaining on the board, they won
-  -- If both players have pieces remaining on the board, but the player whose turn it is has no valid moves, their opponent won
-  -- Otherwise, nobody won
-  -- (We will not attempt to deduce a drawn game. For now, we can provide a mechanism for players to agree that the game is drawn.)
 
 -- makeMove : DirectionalMove -> Game -> Result Game
 -- makeMove move game =
