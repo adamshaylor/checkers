@@ -2,7 +2,6 @@ module CheckersGame exposing (..)
 
 import Array exposing (Array)
 import Dict
-import Html.Attributes exposing (start)
 
 playingSquaresPerRow : Int
 playingSquaresPerRow = 4
@@ -14,9 +13,15 @@ type Color
   = Red
   | White
 
-
 startingColor : Color
 startingColor = Red
+
+type alias Score =
+  { redPiecesCaptured: Int
+  , redPiecesRemaining: Int
+  , whitePiecesCaptured: Int
+  , whitePiecesRemaining: Int
+  }
 
 type Rank
   = Man
@@ -84,7 +89,7 @@ getMoveOriginIndex directionalMove =
     SimpleMove originIndex _ -> originIndex
     JumpMove originIndex _ -> originIndex
 
-getAdjacentIndex: Int -> Direction -> Int
+getAdjacentIndex : Int -> Direction -> Int
 getAdjacentIndex originIndex direction =
   let
     originRowIndex = squareIndexToRowIndex originIndex
@@ -100,7 +105,7 @@ getAdjacentIndex originIndex direction =
       (SW, True) -> originIndex + playingSquaresPerRow
       (SW, False) -> originIndex + playingSquaresPerRow - 1
 
-absoluteToRelativeDirection: Direction -> Color -> RelativeDirection
+absoluteToRelativeDirection : Direction -> Color -> RelativeDirection
 absoluteToRelativeDirection absoluteDirection color =
   case (absoluteDirection, color) of
     (NW, Red) -> Backward
@@ -262,7 +267,7 @@ isTurnComplete turn =
               List.length nextJumpMoves > 0
       Nothing -> False
 
-whoseTurnIsIt: Game -> Maybe Color
+whoseTurnIsIt : Game -> Maybe Color
 whoseTurnIsIt game =
   case (game.winner, game.interruption, lastInArray game.turns) of
     (Nothing, UninterruptedGame, Nothing) -> Just startingColor
@@ -274,6 +279,39 @@ whoseTurnIsIt game =
     (Just _, _, _) -> Nothing
     (_, DrawnGame, _) -> Nothing
     (_, ResignedGame, _) -> Nothing
+
+squareIsOccupiedByColor : Color -> PlayingSquare -> Bool
+squareIsOccupiedByColor color square =
+  case square of
+    Occupied (Piece squareColor _) -> squareColor == color
+    Vacant -> False
+
+countPiecesForColor : Color -> BoardState -> Int
+countPiecesForColor color boardState =
+  Array.filter (squareIsOccupiedByColor color) boardState
+  |> Array.length
+
+currentBoardState : Game -> BoardState
+currentBoardState game =
+  case lastInArray game.turns of
+    Just turn -> turn.lastBoardState
+    Nothing -> game.initialBoardState
+
+gameScore : Game -> Score
+gameScore game =
+  let
+    initialBoard = game.initialBoardState
+    currentBoard = currentBoardState game
+    countRed = countPiecesForColor Red
+    initialRed = countRed initialBoard
+    redRemaining = countRed currentBoard
+    redCaptured = initialRed - redRemaining
+    countWhite = countPiecesForColor White
+    initialWhite = countWhite initialBoard
+    whiteRemaining = countWhite currentBoard
+    whiteCaptured = initialWhite - whiteRemaining
+  in
+    Score redCaptured redRemaining whiteCaptured whiteRemaining
 
 -- whoWon: Game -> Maybe Color
 -- whoWon game =
