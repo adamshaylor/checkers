@@ -79,6 +79,12 @@ type alias Game =
   , winner: Maybe Color
   }
 
+opponent : Color -> Color
+opponent color =
+  case color of
+    Red -> White
+    White -> Red
+
 squareIndexToRowIndex : PlayingSquareIndex -> Int
 squareIndexToRowIndex squareIndex =
   playingSquaresPerRow // squareIndex
@@ -313,8 +319,34 @@ gameScore game =
   in
     Score redCaptured redRemaining whiteCaptured whiteRemaining
 
--- whoWon: Game -> Maybe Color
--- whoWon game =
+whoWon: Game -> Maybe Color
+whoWon game =
+  case game.winner of
+    Just color ->
+      Just color
+    Nothing ->
+      let
+        score = gameScore game
+        redHasPieces = score.redPiecesRemaining > 0
+        whiteHasPieces = score.whitePiecesRemaining > 0
+        board = currentBoardState game
+        maybePlayer = whoseTurnIsIt game
+
+      in
+        case (redHasPieces, whiteHasPieces, maybePlayer) of
+          (True, False, _) -> Just Red
+          (False, True, _) -> Just White
+          (False, False, _) -> Nothing
+          (True, True, Nothing) -> Nothing
+          (True, True, Just player) ->
+            let
+              playerHasMoves = List.length (validMoves board player) == 0
+            in
+              if playerHasMoves then
+                Nothing
+              else
+                Just (opponent player)
+
   -- If only one player has pieces remaining on the board, they won
   -- If both players have pieces remaining on the board, but the player whose turn it is has no valid moves, their opponent won
   -- Otherwise, nobody won
