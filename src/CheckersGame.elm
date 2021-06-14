@@ -349,8 +349,55 @@ whoWon game =
               else
                 Just (opponent player)
 
--- makeMove : DirectionalMove -> Game -> Result Game
--- makeMove move game =
+removePiece : Int -> BoardState -> BoardState
+removePiece indexToRemove board =
+  Array.set indexToRemove Vacant board
+
+setPiece : Piece -> Int -> BoardState -> BoardState
+setPiece piece indexToSet board =
+  Array.set indexToSet (Occupied piece) board
+
+indexIsInBackRowForColor : Color -> Int -> Bool
+indexIsInBackRowForColor color index =
+  case color of
+    Red -> index >= numberOfPlayingSquares - playingSquaresPerRow - 1
+    White -> index <= playingSquaresPerRow - 1
+
+makeMove : DirectionalMove -> Game -> Result String Game
+makeMove move game =
+  case game.interruption of
+    ResignedGame ->
+      Err "Cannot make a move because the game is resigned"
+    DrawnGame ->
+      Err "Cannot make a move because the game is drawn"
+    UninterruptedGame ->
+      let
+        board = currentBoardState game
+        maybePlayerWhoseTurnItIs = whoseTurnIsIt game
+        maybeSquareAtOrigin = getMoveOriginSquare move board
+        isOtherwiseValid = isValidDirectionalMove move board
+        destinationIndex = getMoveDestinationIndex move
+      in
+        case (maybeSquareAtOrigin, maybePlayerWhoseTurnItIs, isOtherwiseValid) of
+          (Nothing, _, _) ->
+            Err "The specified origin square is out of bounds"
+          (Just Vacant, _, _) ->
+            Err "There is no piece at the origin square"
+          (_, Nothing, _) ->
+            Err "It isn’t anyone’s turn"
+          (Just _, Just _, False) ->
+            Err "Invalid move"
+          (Just (Occupied (Piece originColor _)), Just playerWhoseTurnItIs, True) ->
+            let
+              destinationIsInBackRow = indexIsInBackRowForColor originColor destinationIndex
+            in
+              if originColor /= playerWhoseTurnItIs then
+                Err "It's not the turn of the player at the origin square"
+              else
+                case (move) of
+                  -- TODO
+                  SimpleMove _ _ -> Ok game
+                  JumpMove _ _ -> Ok game
   -- Confirm that the game is uninterrupted and there is no winner
   -- Confirm that there is a player at the origin square
   -- Confirm it’s the turn of the player at the origin square
