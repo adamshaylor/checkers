@@ -95,6 +95,12 @@ getMoveOriginIndex directionalMove =
     SimpleMove originIndex _ -> originIndex
     JumpMove originIndex _ -> originIndex
 
+getMoveDirection : DirectionalMove -> Direction
+getMoveDirection directionalMove =
+  case directionalMove of
+    SimpleMove _ direction -> direction
+    JumpMove _ direction -> direction
+
 getAdjacentIndex : Int -> Direction -> Int
 getAdjacentIndex originIndex direction =
   let
@@ -376,6 +382,7 @@ makeMove move game =
         maybePlayerWhoseTurnItIs = whoseTurnIsIt game
         maybeSquareAtOrigin = getMoveOriginSquare move board
         isOtherwiseValid = isValidDirectionalMove move board
+        originIndex = getMoveOriginIndex move
         destinationIndex = getMoveDestinationIndex move
       in
         case (maybeSquareAtOrigin, maybePlayerWhoseTurnItIs, isOtherwiseValid) of
@@ -390,14 +397,25 @@ makeMove move game =
           (Just (Occupied (Piece originColor _)), Just playerWhoseTurnItIs, True) ->
             let
               destinationIsInBackRow = indexIsInBackRowForColor originColor destinationIndex
+              updatedBoardState =
+                case (move, destinationIsInBackRow) of
+                  -- TODO
+                  (SimpleMove _ _, False) -> board
+                  (SimpleMove _ _, True) -> board
+                  (JumpMove _ _, False) -> board
+                  (JumpMove _ _, True) -> board
+              -- TODO
+              updatedTurns = game.turns
+              updatedWinner = game.winner
             in
               if originColor /= playerWhoseTurnItIs then
                 Err "It's not the turn of the player at the origin square"
               else
-                case (move) of
-                  -- TODO
-                  SimpleMove _ _ -> Ok game
-                  JumpMove _ _ -> Ok game
+                Ok { initialBoardState = game.initialBoardState
+                , turns = updatedTurns
+                , interruption = game.interruption
+                , winner = updatedWinner
+                }
   -- Confirm that the game is uninterrupted and there is no winner
   -- Confirm that there is a player at the origin square
   -- Confirm it’s the turn of the player at the origin square
